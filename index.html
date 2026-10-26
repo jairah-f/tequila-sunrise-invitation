@@ -802,9 +802,9 @@ main{position:relative}
     var fullName=nameInput.value.trim();
     var email=emailInput.value.trim();
     nameInput.setAttribute('aria-invalid', fullName ? 'false' : 'true');
-    emailInput.setAttribute('aria-invalid', /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) ? 'false' : 'true');
+    emailInput.setAttribute('aria-invalid', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'false' : 'true');
     if(!fullName){ say('Please enter your full name.',true); nameInput.focus(); return; }
-    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){ say('Please enter a valid email address.',true); emailInput.focus(); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ say('Please enter a valid email address.',true); emailInput.focus(); return; }
     var sel=form.querySelector('input[name="rsvp"]:checked');
     if(!sel){ say('Please choose one option before confirming your RSVP.',true); return; }
     if(!window.emailjs || !EMAILJS_PUBLIC_KEY){
@@ -819,6 +819,8 @@ main{position:relative}
       submission_time:when,
       event_name:"Ycor's Birthday",
       from_name:fullName,
+      name:fullName,
+      email:email,
       reply_to:email,
       respondent_name:fullName,
       respondent_email:email,
