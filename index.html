@@ -216,7 +216,15 @@ main{position:relative}
 .rsvp-title{font:500 clamp(3.5rem,15vw,6rem)/1 var(--serif);letter-spacing:.08em;padding-left:.08em;color:var(--ink);margin:0}
 .rsvp-q{margin:.8rem 0 0;font:italic 500 clamp(1.15rem,3.8vw,1.55rem)/1.3 var(--serif);color:var(--ink-soft);text-wrap:balance}
 .rsvp-sub{margin:.7rem auto 0;max-width:34ch;font:400 .95rem/1.55 var(--sans);color:var(--ink-soft)}
-.rsvp-form{margin-top:2rem;display:flex;flex-direction:column;align-items:center;gap:1.1rem;width:100%}
+ .rsvp-form{margin-top:2rem;display:flex;flex-direction:column;align-items:center;gap:1.1rem;width:100%}
+.rsvp-fields{display:grid;grid-template-columns:1fr;gap:1rem;width:100%;text-align:left}
+.rsvp-field{display:flex;flex-direction:column;gap:.45rem;width:100%;color:var(--ink);font:600 .76rem/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase}
+.rsvp-field input{width:100%;min-width:0;box-sizing:border-box;padding:.9rem 1rem;border:1px solid #EBD3BE;border-radius:4px;background:rgba(255,255,255,.82);color:var(--ink);font:400 .98rem/1.4 var(--sans);letter-spacing:normal;text-transform:none;outline:none;transition:border-color .2s,box-shadow .2s}
+.rsvp-field input::placeholder{color:#A78985;opacity:1}
+.rsvp-field input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(216,69,127,.12)}
+.rsvp-field input[aria-invalid="true"]{border-color:#B3261E}
+.rsvp-field-hint{font:400 .78rem/1.4 var(--sans);letter-spacing:normal;text-transform:none;color:var(--ink-soft)}
+@media(min-width:560px){.rsvp-fields{grid-template-columns:1fr 1fr;gap:1rem}}
 .rsvp-opts{border:0;margin:0;padding:0;min-width:0;width:100%;display:flex;flex-direction:column;gap:12px}
 .rsvp-opt{position:relative;display:flex;cursor:pointer}
 .rsvp-opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
@@ -568,6 +576,16 @@ main{position:relative}
         <p class="rsvp-q">Will you join the celebration?</p>
         <p class="rsvp-sub">Please let us know if you’ll be joining us!</p>
         <form class="rsvp-form" id="rsvp-form" novalidate>
+          <div class="rsvp-fields">
+            <label class="rsvp-field" for="rsvp-name">Full Name
+              <input id="rsvp-name" name="from_name" type="text" autocomplete="name" placeholder="Your full name" maxlength="120" required aria-describedby="rsvp-name-hint">
+              <span class="rsvp-field-hint" id="rsvp-name-hint">So we know who’s responding</span>
+            </label>
+            <label class="rsvp-field" for="rsvp-email">Email Address
+              <input id="rsvp-email" name="reply_to" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="254" required aria-describedby="rsvp-email-hint">
+              <span class="rsvp-field-hint" id="rsvp-email-hint">Your Gmail or another valid email</span>
+            </label>
+          </div>
           <fieldset class="rsvp-opts">
             <legend class="sr">Your RSVP response</legend>
             <label class="rsvp-opt"><input type="radio" name="rsvp" value="YES"><span>YES! I WOULDN’T MISS IT!</span></label>
@@ -771,10 +789,22 @@ main{position:relative}
 
   function say(t,err){ msg.textContent=t; msg.classList.toggle('err',!!err); }
   form.addEventListener('change',function(){ say('',false); });
+  ['#rsvp-name','#rsvp-email'].forEach(function(selector){
+    var field=form.querySelector(selector);
+    field.addEventListener('input',function(){ field.removeAttribute('aria-invalid'); say('',false); });
+  });
 
   form.addEventListener('submit',function(e){
     e.preventDefault();
     if(busy) return;
+    var nameInput=form.querySelector('#rsvp-name');
+    var emailInput=form.querySelector('#rsvp-email');
+    var fullName=nameInput.value.trim();
+    var email=emailInput.value.trim();
+    nameInput.setAttribute('aria-invalid', fullName ? 'false' : 'true');
+    emailInput.setAttribute('aria-invalid', /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) ? 'false' : 'true');
+    if(!fullName){ say('Please enter your full name.',true); nameInput.focus(); return; }
+    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){ say('Please enter a valid email address.',true); emailInput.focus(); return; }
     var sel=form.querySelector('input[name="rsvp"]:checked');
     if(!sel){ say('Please choose one option before confirming your RSVP.',true); return; }
     if(!window.emailjs || !EMAILJS_PUBLIC_KEY){
@@ -788,6 +818,10 @@ main{position:relative}
       rsvp_response:RESP[choice],
       submission_time:when,
       event_name:"Ycor's Birthday",
+      from_name:fullName,
+      reply_to:email,
+      respondent_name:fullName,
+      respondent_email:email,
       to_email:RECIPIENT,
       subject:SUBJECT
     },{publicKey:EMAILJS_PUBLIC_KEY}).then(function(r){
